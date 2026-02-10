@@ -12,6 +12,9 @@ public final class DemoMain {
         projection.put("total_amt", "sum(amount)");
         projection.put("max_ts", "max(toUInt64(ts))");
         projection.put("dim_name", "dictGet('dim_user', 'name', user_id)");
+        projection.put("pair_metric", "t1.a + t2.b");
+        projection.put("item", "arrayJoin(items)");
+        projection.put("const_one", "1");
 
         LineageGraph graph = service.buildProjectLineage("ods_orders", "result", projection);
 

@@ -16,3 +16,10 @@
 javac src/main/java/com/todo/lineage/*.java
 java -cp src/main/java com.todo.lineage.DemoMain
 ```
+
+### 轻量测试
+
+```bash
+javac src/main/java/com/todo/lineage/*.java src/test/java/com/todo/lineage/LineageServiceTestMain.java
+java -cp src/main/java:src/test/java com.todo.lineage.LineageServiceTestMain
+```
