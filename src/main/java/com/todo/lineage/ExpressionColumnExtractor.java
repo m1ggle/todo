@@ -10,6 +10,7 @@ public final class ExpressionColumnExtractor {
     private static final Pattern IDENTIFIER = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
     private static final Pattern QUALIFIED = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)");
     private static final Pattern SINGLE_QUOTED = Pattern.compile("'[^']*'");
+    private static final Pattern DOUBLE_QUOTED = Pattern.compile("\"[^\"]*\"");
 
     private ExpressionColumnExtractor() {
     }
@@ -49,9 +50,10 @@ public final class ExpressionColumnExtractor {
         return result;
     }
 
-    private static String sanitize(String expression) {
-        String withoutQuotes = SINGLE_QUOTED.matcher(expression).replaceAll(" ");
-        return withoutQuotes.replace('`', ' ');
+    public static String sanitize(String expression) {
+        String withoutSingle = SINGLE_QUOTED.matcher(expression).replaceAll(" ");
+        String withoutDouble = DOUBLE_QUOTED.matcher(withoutSingle).replaceAll(" ");
+        return withoutDouble.replace('`', ' ');
     }
 
     private static boolean isReserved(String token) {
@@ -64,6 +66,7 @@ public final class ExpressionColumnExtractor {
             || token.equals("toint64")
             || token.equals("touint64")
             || token.equals("dictget")
+            || token.equals("arrayjoin")
             || token.equals("case")
             || token.equals("when")
             || token.equals("then")
@@ -74,8 +77,9 @@ public final class ExpressionColumnExtractor {
             || token.equals("not")
             || token.equals("null")
             || token.equals("as")
-            || token.equals("final")
-            || token.equals("arrayjoin");
+            || token.equals("true")
+            || token.equals("false")
+            || token.equals("final");
     }
 
     private static boolean isNumeric(String token) {

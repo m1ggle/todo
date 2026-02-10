@@ -32,5 +32,8 @@ public final class DemoMain {
         for (String warning : graph.warnings()) {
             System.out.println("- " + warning);
         }
+
+        System.out.println("\nJSON:");
+        System.out.println(graph.toJson());
     }
 }

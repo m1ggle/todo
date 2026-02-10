@@ -23,3 +23,8 @@ java -cp src/main/java com.todo.lineage.DemoMain
 javac src/main/java/com/todo/lineage/*.java src/test/java/com/todo/lineage/LineageServiceTestMain.java
 java -cp src/main/java:src/test/java com.todo.lineage.LineageServiceTestMain
 ```
+
+
+### 输出 JSON DAG
+
+`LineageGraph` 提供 `toJson()` 方法，可直接输出节点/边/warnings 的 JSON 文本。

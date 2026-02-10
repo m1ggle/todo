@@ -17,16 +17,17 @@ public final class LineageService {
             String targetColumn = entry.getKey();
             String expression = entry.getValue();
             String normalized = normalizeExpression(expression);
+            String semanticText = ExpressionColumnExtractor.sanitize(normalized).toLowerCase(Locale.ROOT);
             ColumnRef targetRef = new ColumnRef(targetTable, targetColumn);
             Set<ColumnRef> inputs = ExpressionColumnExtractor.extractColumnRefs(normalized, sourceTable);
 
-            if (containsToken(normalized, "dictget(")) {
+            if (containsToken(semanticText, "dictget(")) {
                 builder.warn("dictGet detected: mark as EXTERNAL_LINEAGE");
             }
-            if (containsToken(normalized, "final")) {
+            if (containsWholeWord(semanticText, "final")) {
                 builder.warn("FINAL ignored for lineage");
             }
-            if (containsToken(normalized, "arrayjoin(")) {
+            if (containsToken(semanticText, "arrayjoin(")) {
                 builder.warn("ARRAY JOIN detected in expression");
             }
 
@@ -35,7 +36,7 @@ public final class LineageService {
                 continue;
             }
 
-            LineageType type = detectType(normalized, inputs, targetColumn);
+            LineageType type = detectType(semanticText, inputs, targetColumn);
             for (ColumnRef input : inputs) {
                 builder.add(input, targetRef, type, normalized);
             }
@@ -44,23 +45,22 @@ public final class LineageService {
         return builder.build();
     }
 
-    private LineageType detectType(String expression, Set<ColumnRef> inputs, String targetColumn) {
-        String lower = expression.toLowerCase(Locale.ROOT);
-
-        if (containsToken(lower, "dictget(")) {
+    private LineageType detectType(String semanticText, Set<ColumnRef> inputs, String targetColumn) {
+        if (containsToken(semanticText, "dictget(")) {
             return LineageType.EXTERNAL_LINEAGE;
         }
-        if (containsToken(lower, "arrayjoin(")) {
+        if (containsToken(semanticText, "arrayjoin(")) {
             return LineageType.DERIVED_ARRAY;
         }
-        if (containsToken(lower, "sum(") || containsToken(lower, "max(") || containsToken(lower, "min(")
-            || containsToken(lower, "count(") || containsToken(lower, "avg(")) {
+        if (containsToken(semanticText, "sum(") || containsToken(semanticText, "max(") || containsToken(semanticText, "min(")
+            || containsToken(semanticText, "count(") || containsToken(semanticText, "avg(")) {
             return LineageType.AGG;
         }
 
         if (inputs.size() == 1) {
             ColumnRef input = inputs.iterator().next();
-            if (input.column().equalsIgnoreCase(targetColumn) && lower.equals(targetColumn.toLowerCase(Locale.ROOT))) {
+            if (input.column().equalsIgnoreCase(targetColumn)
+                && semanticText.equals(targetColumn.toLowerCase(Locale.ROOT))) {
                 return LineageType.DIRECT;
             }
         }
@@ -73,6 +73,21 @@ public final class LineageService {
     }
 
     private boolean containsToken(String expression, String token) {
-        return expression.toLowerCase(Locale.ROOT).contains(token.toLowerCase(Locale.ROOT));
+        return expression.contains(token.toLowerCase(Locale.ROOT));
+    }
+
+    private boolean containsWholeWord(String text, String word) {
+        String needle = word.toLowerCase(Locale.ROOT);
+        int idx = text.indexOf(needle);
+        while (idx >= 0) {
+            boolean leftOk = idx == 0 || !Character.isLetterOrDigit(text.charAt(idx - 1));
+            int end = idx + needle.length();
+            boolean rightOk = end >= text.length() || !Character.isLetterOrDigit(text.charAt(end));
+            if (leftOk && rightOk) {
+                return true;
+            }
+            idx = text.indexOf(needle, idx + 1);
+        }
+        return false;
     }
 }
